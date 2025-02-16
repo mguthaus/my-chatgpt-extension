@@ -4,12 +4,14 @@
     <meta charset="utf-8" />
     <title>My ChatGPT Extension</title>
     <style>
-      /* Make the popup about 50% bigger than before */
+      /* Force the popup to be 800x600 (Chrome's typical max allowed) */
       body {
         font-family: Arial, sans-serif;
         margin: 15px;
-        min-width: 750px;  /* Increase width from 500px to 750px (50% bigger) */
-        min-height: 900px; /* Increase height from 600px to 900px (50% bigger) */
+        width: 800px;  /* or min-width: 800px */
+        height: 600px; /* or min-height: 600px */
+        box-sizing: border-box;
+        overflow: auto; /* allow scroll if content overflows */
       }
       textarea {
         width: 100%;
@@ -36,34 +38,28 @@
     </style>
   </head>
   <body>
-    <h2>Send Text to ChatGPT</h2>
+    <h2>Send Selected Text to ChatGPT</h2>
 
-    <label for="selectedText">Selected Text:</label><br />
-    <textarea id="selectedText" readonly></textarea><br /><br />
+    <label for="selectedText">Selected Text:</label><br/>
+    <textarea id="selectedText" readonly></textarea><br/><br/>
 
-    <label for="prompt">Your Prompt:</label><br />
-    <textarea
-      id="prompt"
-      placeholder="Describe what to do with the text..."
-    ></textarea><br /><br />
+    <label for="prompt">Your Prompt:</label><br/>
+    <textarea id="prompt" placeholder="Describe what to do with the text..."></textarea><br/><br/>
 
     <div class="button-row">
-      <button class="generic-btn" id="btnSummarize">
-        Summarize
-      </button>
-      <button class="generic-btn" id="btnCopyEdit">
-        Copy Edit
-      </button>
+      <button class="generic-btn" id="btnSummarize">Summarize</button>
+      <button class="generic-btn" id="btnCopyEdit">Copy Edit</button>
     </div>
 
     <button id="sendBtn">Send to ChatGPT</button>
-    <br /><br />
+    <br/><br/>
 
-    <label for="response">Response:</label><br />
-    <textarea id="response" readonly></textarea><br />
+    <label for="response">Response:</label><br/>
+    <textarea id="response" readonly></textarea><br/>
     <button id="copyBtn">Copy</button>
 
     <script src="popup.js"></script>
   </body>
 </html>
+
 

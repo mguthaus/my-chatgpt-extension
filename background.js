@@ -1,10 +1,11 @@
 /******************************************************
  * background.js
- * Creates a context menu item and stores the
- * selected text in chrome.storage.session.
+ * - Creates a context menu item.
+ * - Stores selected text in session storage.
+ * - Automatically opens the popup after the user clicks
+ *   the context menu (using chrome.action.openPopup()).
  ******************************************************/
 
-// Create a context menu item whenever the extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "sendToOpenAI",
@@ -13,14 +14,19 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Listen for a context menu click and store the selected text
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "sendToOpenAI") {
     const selectedText = info.selectionText || "";
 
-    // Save the selected text in session storage
+    // Store the selected text in session storage
     chrome.storage.session.set({ selectedText: selectedText }, () => {
       console.log("Selected text stored in session:", selectedText);
+
+      // Attempt to open the popup automatically
+      // This should be allowed because the context menu click is a user gesture
+      chrome.action.openPopup().catch((err) => {
+        console.warn("Could not open popup automatically:", err);
+      });
     });
   }
 });

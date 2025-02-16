@@ -17,7 +17,12 @@
   },
   "icons": {
     "128": "icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["apiKey.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
-
 

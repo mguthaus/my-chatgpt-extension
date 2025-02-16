@@ -1,12 +1,15 @@
-/******************************************************
+//******************************************************
  * popup.js
- * - Retrieves selected text from session storage.
- * - Remembers the last used prompt in local storage.
- * - Offers two shortcut prompt buttons.
- * - Calls the OpenAI API and displays the result.
+ *  - Dynamically loads the OpenAI API key from apiKey.json
+ *  - Retrieves selected text from session storage
+ *  - Remembers the last used prompt in local storage
+ *  - Offers two shortcut prompt buttons
+ *  - Calls the OpenAI API and displays the result
  ******************************************************/
 
-// === DOM Elements ===
+let OPENAI_API_KEY = null; // Will be loaded from apiKey.json
+
+// --- DOM Elements ---
 const selectedTextEl = document.getElementById("selectedText");
 const promptEl = document.getElementById("prompt");
 const responseEl = document.getElementById("response");
@@ -15,72 +18,87 @@ const copyBtn = document.getElementById("copyBtn");
 const btnSummarize = document.getElementById("btnSummarize");
 const btnCopyEdit = document.getElementById("btnCopyEdit");
 
-// === OpenAI API Key (Replace with your real key!) ===
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE";
-
-// On popup load:
-// 1) Retrieve selected text from session storage
-// 2) Retrieve the last used prompt from local storage
-document.addEventListener("DOMContentLoaded", async () => {
+// 1) Load the API key from apiKey.json asynchronously
+async function loadApiKey() {
   try {
-    // 1) Get selected text from session storage
+    const response = await fetch(chrome.runtime.getURL("apiKey.json"));
+    if (!response.ok) {
+      throw new Error("Failed to load apiKey.json");
+    }
+    const data = await response.json();
+    OPENAI_API_KEY = data.openaiApiKey;
+    if (!OPENAI_API_KEY) {
+      console.warn("No API key found in apiKey.json");
+    }
+  } catch (error) {
+    console.error("Error loading API key:", error);
+  }
+}
+
+// 2) On popup load, do two things:
+//    a) load the API key
+//    b) retrieve selected text (session storage)
+//    c) retrieve the last used prompt (local storage)
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadApiKey();
+
+  try {
     const { selectedText } = await chrome.storage.session.get(["selectedText"]);
     if (selectedText) {
       selectedTextEl.value = selectedText;
     } else {
-      selectedTextEl.value = "No selected text available.\n\nTip: Right-click on some text and choose 'Send selected text to OpenAI' before opening this popup.";
+      selectedTextEl.value =
+        "No selected text available.\n\n(Please highlight text, right-click, and choose 'Send selected text to OpenAI' first.)";
     }
-
-    // 2) Retrieve the last used prompt from local storage
-    chrome.storage.local.get("lastPrompt", (data) => {
-      if (data.lastPrompt) {
-        promptEl.value = data.lastPrompt;
-      }
-    });
-  } catch (error) {
-    console.error("Error retrieving session/local data:", error);
+  } catch (err) {
+    console.error("Error retrieving session data:", err);
     selectedTextEl.value = "Error: Could not retrieve selected text.";
   }
+
+  // Retrieve last used prompt
+  chrome.storage.local.get("lastPrompt", (data) => {
+    if (data.lastPrompt) {
+      promptEl.value = data.lastPrompt;
+    }
+  });
 });
 
 // --- Generic prompt buttons ---
-
-// 1) Summarize
 btnSummarize.addEventListener("click", () => {
   promptEl.value = "Summarize the selected text without omitting key details.";
 });
 
-// 2) Copy Edit
 btnCopyEdit.addEventListener("click", () => {
   promptEl.value = "Copy edit the selected text to be direct and to the point.";
 });
 
 // --- Send to ChatGPT ---
 sendBtn.addEventListener("click", async () => {
-  // Get user prompt and selected text
+  // 1) Gather user input
   const userPrompt = promptEl.value.trim();
   const textToUse = selectedTextEl.value.trim();
 
+  if (!OPENAI_API_KEY) {
+    responseEl.value = "No API key loaded. Check apiKey.json or network errors.";
+    return;
+  }
+
   if (!userPrompt) {
-    responseEl.value = "Please enter a prompt or select a generic prompt.";
+    responseEl.value = "Please enter a prompt or use a generic prompt.";
     return;
   }
 
-  // If there's a placeholder message in the selected text, it likely means none was stored
-  if (!textToUse || textToUse.startsWith("No selected text available.")) {
-    responseEl.value = "No valid text to send. Right-click text → 'Send...' first.";
+  if (!textToUse || textToUse.startsWith("No selected text available")) {
+    responseEl.value = "No valid text available. Right-click text → 'Send selected text to OpenAI' first.";
     return;
   }
 
-  // Save the user's prompt in local storage for next time
+  // 2) Save the user's prompt for next time
   chrome.storage.local.set({ lastPrompt: userPrompt });
 
-  // Prepare the messages for OpenAI
+  // 3) Prepare messages for the ChatGPT API
   const messages = [
-    {
-      role: "system",
-      content: "You are a helpful assistant."
-    },
+    { role: "system", content: "You are a helpful assistant." },
     {
       role: "user",
       content: `Prompt: ${userPrompt}\n\nSelected Text: ${textToUse}`
@@ -90,7 +108,7 @@ sendBtn.addEventListener("click", async () => {
   try {
     responseEl.value = "Loading...";
 
-    // Make the request to OpenAI Chat Completion endpoint
+    // 4) Call the OpenAI Chat Completion endpoint
     const apiUrl = "https://api.openai.com/v1/chat/completions";
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -113,8 +131,6 @@ sendBtn.addEventListener("click", async () => {
 
     const responseData = await response.json();
     const assistantMessage = responseData.choices[0].message.content;
-
-    // Display the result
     responseEl.value = assistantMessage;
   } catch (err) {
     console.error("OpenAI request error:", err);
@@ -122,7 +138,7 @@ sendBtn.addEventListener("click", async () => {
   }
 });
 
-// --- Copy Button ---
+// --- Copy the response to the clipboard ---
 copyBtn.addEventListener("click", () => {
   const textToCopy = responseEl.value;
   if (textToCopy) {
@@ -136,5 +152,4 @@ copyBtn.addEventListener("click", () => {
     );
   }
 });
-
 
