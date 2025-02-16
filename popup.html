@@ -4,34 +4,43 @@
     <meta charset="utf-8" />
     <title>My ChatGPT Extension</title>
     <style>
-      /* Force the popup to be 800x600 (Chrome's typical max allowed) */
+      /* Set the popup size to 800x600 but ensure no horizontal scrollbar */
       body {
         font-family: Arial, sans-serif;
         margin: 15px;
-        width: 800px;  /* or min-width: 800px */
-        height: 600px; /* or min-height: 600px */
         box-sizing: border-box;
-        overflow: auto; /* allow scroll if content overflows */
+        width: 800px;             /* Force width to 800px */
+        height: 600px;            /* Force height to 600px */
+        overflow-x: hidden;       /* No horizontal scroll */
+        overflow-y: auto;         /* Vertical scroll if content is too tall */
       }
+
       textarea {
-        width: 100%;
+        width: 90%;
         box-sizing: border-box;
+        resize: vertical;         /* Optional: let user resize vertically only if you like */
       }
+
       #selectedText {
         height: 80px;
       }
+
       #prompt {
         height: 60px;
       }
+
       #response {
         height: 140px;
       }
+
       .button-row {
         margin: 10px 0;
       }
+
       .generic-btn {
         margin-right: 10px;
       }
+
       #copyBtn {
         margin-top: 10px;
       }
@@ -40,11 +49,11 @@
   <body>
     <h2>Send Selected Text to ChatGPT</h2>
 
-    <label for="selectedText">Selected Text:</label><br/>
-    <textarea id="selectedText" readonly></textarea><br/><br/>
+    <label for="selectedText">Selected Text:</label><br />
+    <textarea id="selectedText" readonly></textarea><br /><br />
 
-    <label for="prompt">Your Prompt:</label><br/>
-    <textarea id="prompt" placeholder="Describe what to do with the text..."></textarea><br/><br/>
+    <label for="prompt">Your Prompt:</label><br />
+    <textarea id="prompt" placeholder="Describe what to do with the text..."></textarea><br /><br />
 
     <div class="button-row">
       <button class="generic-btn" id="btnSummarize">Summarize</button>
@@ -52,10 +61,10 @@
     </div>
 
     <button id="sendBtn">Send to ChatGPT</button>
-    <br/><br/>
+    <br /><br />
 
-    <label for="response">Response:</label><br/>
-    <textarea id="response" readonly></textarea><br/>
+    <label for="response">Response:</label><br />
+    <textarea id="response" readonly></textarea><br />
     <button id="copyBtn">Copy</button>
 
     <script src="popup.js"></script>
